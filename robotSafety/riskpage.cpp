@@ -66,23 +66,16 @@ void SimulationView::paintEvent(QPaintEvent *)
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing);
 
-    // Select high-contrast text colors for both white mode and dark mode.
     const QColor strongText = lightMode ? QColor("#111827") : QColor("#ffffff");
-
-    // Select secondary text color. In white mode this must stay dark enough to read clearly.
     const QColor weakText = lightMode ? QColor("#374151") : QColor("#b8c2d6");
-
-    // Select tag text color used inside small labels and information boxes.
     const QColor tagText = lightMode ? QColor("#111827") : QColor("#f2f2f2");
+    const QColor labelBg = lightMode ? QColor(255, 255, 255, 235) : QColor(25, 25, 43, 210);
 
-    // Select semi-opaque label background so text remains readable on colored zones.
-    const QColor labelBg = lightMode ? QColor(255, 255, 255, 240) : QColor(25, 25, 43, 220);
-
-    // Select theme colors for the drawing area.
+    // Select theme colors.
     const QColor bg = lightMode ? QColor("#f3f4f6") : QColor("#1e1e1e");
     const QColor panel = lightMode ? QColor("#ffffff") : QColor("#19192b");
-    const QColor text = strongText;
-    const QColor sub = weakText;
+    const QColor text = lightMode ? QColor("#111827") : QColor("#ffffff");
+    const QColor sub = lightMode ? QColor("#4b5563") : QColor("#b8c2d6");
     const QColor border = lightMode ? QColor("#9ca3af") : QColor("#8d8d8d");
 
     // Draw background.
@@ -90,7 +83,7 @@ void SimulationView::paintEvent(QPaintEvent *)
 
     // Define main field rectangle.
     QRect field(24, 8, width() - 48, riskHistoryVisible ? 315 : height() - 16);
-    p.setPen(QPen(border, 1));
+    p.setPen(tagText);
     p.setBrush(panel);
     p.drawRect(field);
 
@@ -101,15 +94,6 @@ void SimulationView::paintEvent(QPaintEvent *)
     p.setPen(sub);
     p.setFont(QFont("Segoe UI", 9));
     p.drawText(field.adjusted(18, 42, -18, -18), Qt::AlignTop | Qt::AlignLeft, "Robot, human, obstacle, warning line, stop line, and brake distance.");
-
-    // Helper lambda: draw readable text on a semi-opaque rounded label background.
-    auto drawLabel = [&](const QRect &rect, const QString &textValue, const QColor &penColor, Qt::Alignment align = Qt::AlignCenter) {
-        p.setPen(QPen(border, 1));
-        p.setBrush(labelBg);
-        p.drawRoundedRect(rect, 4, 4);
-        p.setPen(penColor);
-        p.drawText(rect.adjusted(4, 0, -4, 0), align, textValue);
-    };
 
     // Convert meter values to screen coordinates.
     const int baseY = field.center().y() + 28;
@@ -141,20 +125,16 @@ void SimulationView::paintEvent(QPaintEvent *)
     p.setPen(QPen(QColor("#f59e0b"), 4));
     p.drawLine(warningX, baseY - 58, warningX, baseY + 58);
     p.setFont(QFont("Segoe UI", 8, QFont::Bold));
-
-    // Draw threshold labels with background boxes to keep them readable in white mode.
-    drawLabel(QRect(stopX - 45, baseY - 82, 90, 20), "STOP line", QColor("#dc2626"));
-    drawLabel(QRect(warningX - 55, baseY - 82, 110, 20), "WARNING line", QColor("#d97706"));
+    p.setPen(QColor("#ef4e42"));
+    p.drawText(QRect(stopX - 45, baseY - 82, 90, 20), Qt::AlignCenter, "STOP line");
+    p.setPen(QColor("#f59e0b"));
+    p.drawText(QRect(warningX - 55, baseY - 82, 110, 20), Qt::AlignCenter, "WARNING line");
 
     // Draw brake distance.
     p.setPen(QPen(QColor("#38bdf8"), 3, Qt::DashLine));
     p.drawLine(robotX + 70, baseY + 58, brakeX, baseY + 58);
-
-    // Draw brake label with background so the cyan text does not disappear on bright zones.
-    drawLabel(QRect(robotX + 70, baseY + 64, 190, 20),
-              QString("Brake distance: %1 m").arg(result.brakeDistance, 0, 'f', 2),
-              QColor("#0284c7"),
-              Qt::AlignLeft | Qt::AlignVCenter);
+    p.setPen(QColor("#38bdf8"));
+    p.drawText(QRect(robotX + 70, baseY + 64, 190, 20), Qt::AlignLeft, QString("Brake: %1 m").arg(result.brakeDistance, 0, 'f', 2));
 
     // Draw robot body.
     p.setPen(Qt::NoPen);
@@ -172,11 +152,8 @@ void SimulationView::paintEvent(QPaintEvent *)
     p.setBrush(humanColor);
     p.drawEllipse(QPoint(humanX, baseY - 62), 10, 10);
     p.drawRoundedRect(QRect(humanX - 7, baseY - 48, 14, 30), 6, 6);
-
-    // Draw human distance label with background for white-mode readability.
-    drawLabel(QRect(humanX - 70, baseY - 94, 140, 20),
-              QString("Human %1 m").arg(input.humanDistance, 0, 'f', 1),
-              humanColor);
+    p.setPen(humanColor);
+    p.drawText(QRect(humanX - 70, baseY - 94, 140, 20), Qt::AlignCenter, QString("Human %1 m").arg(input.humanDistance, 0, 'f', 1));
 
     // Draw obstacle marker.
     QColor obstacleColor = input.obstacleDistance <= input.stopDistance ? QColor("#ef4e42") : input.obstacleDistance <= input.warningDistance ? QColor("#f59e0b") : QColor("#26a47e");
@@ -185,18 +162,15 @@ void SimulationView::paintEvent(QPaintEvent *)
     QPolygon cone;
     cone << QPoint(obstacleX, baseY + 8) << QPoint(obstacleX - 24, baseY + 58) << QPoint(obstacleX + 24, baseY + 58);
     p.drawPolygon(cone);
-
-    // Draw obstacle distance label with background for white-mode readability.
-    drawLabel(QRect(obstacleX - 80, baseY + 62, 160, 20),
-              QString("Obstacle %1 m").arg(input.obstacleDistance, 0, 'f', 1),
-              obstacleColor);
+    p.setPen(obstacleColor);
+    p.drawText(QRect(obstacleX - 80, baseY + 62, 160, 20), Qt::AlignCenter, QString("Obstacle %1 m").arg(input.obstacleDistance, 0, 'f', 1));
 
     // Draw state summary.
     p.setPen(QPen(stateColor(result.state), 1));
-    p.setBrush(labelBg);
+    p.setBrush(panel);
     QRect stateBox(field.left() + 18, field.bottom() - 44, field.width() - 36, 28);
     p.drawRoundedRect(stateBox, 4, 4);
-    p.setPen(strongText);
+    p.setPen(text);
     p.drawText(stateBox.adjusted(8, 0, -8, 0), Qt::AlignVCenter | Qt::AlignLeft, QString("State: %1 | Risk: %2 | Margin: %3 m | Door: %4%")
                    .arg(result.state).arg(result.riskScore, 0, 'f', 1).arg(result.safetyMargin, 0, 'f', 2).arg(input.doorOpenRate, 0, 'f', 0));
 
@@ -211,7 +185,7 @@ void SimulationView::paintEvent(QPaintEvent *)
     p.setFont(QFont("Segoe UI", 13, QFont::Bold));
     p.drawText(chart.adjusted(18, 12, -18, -18), Qt::AlignTop | Qt::AlignLeft, "Risk History");
     QRect plot = chart.adjusted(50, 52, -24, -24);
-    p.setPen(QPen(lightMode ? QColor("#9ca3af") : QColor("#6b7280"), 1));
+    p.setPen(QPen(QColor("#6b7280"), 1));
     p.drawRect(plot);
     if (history.size() > 1) {
         QPainterPath path;
@@ -243,8 +217,6 @@ void RiskPage::styleApp()
     const QString text = lightMode ? "#111827" : "#ffffff";
     const QString subText = lightMode ? "#4b5563" : "#b8b8b8";
     const QString border = lightMode ? "#9ca3af" : "#565656";
-    const QString ruleBg = lightMode ? "#fff7ed" : "#30251d";
-    const QString ruleText = lightMode ? "#9a3412" : "#ffb4a9";
     QString sheet;
     sheet += "QWidget#RiskPage { background:" + pageBg + "; color:" + text + "; font-family:'Segoe UI'; }";
     sheet += "QLabel { color:" + text + "; }";
@@ -253,7 +225,7 @@ void RiskPage::styleApp()
     sheet += "QLabel#Guide { background:" + panelBg + "; color:" + text + "; border:1px solid " + border + "; border-radius:4px; padding:9px; }";
     sheet += "QLabel#MetricLine { color:" + text + "; font-size:12px; padding:2px 0; }";
     sheet += "QLabel#ReasonBox, QLabel#CurrentValuesBox { background:" + panelBg + "; border:1px solid " + border + "; border-radius:4px; padding:7px; }";
-    sheet += "QLabel#RuleBox { background:" + ruleBg + "; border:1px solid #ef4e42; border-radius:4px; padding:7px; color:" + ruleText + "; font-weight:700; }";
+    sheet += "QLabel#RuleBox { background:#30251d; border:1px solid #ef4e42; border-radius:4px; padding:7px; color:#ffb4a9; font-weight:700; }";
     sheet += "QGroupBox { background:" + panelBg + "; border:1px solid " + border + "; border-radius:5px; margin-top:14px; color:" + text + "; }";
     sheet += "QGroupBox::title { subcontrol-origin:margin; left:10px; padding:0 4px; background:" + panelBg + "; color:" + text + "; }";
     sheet += "QPushButton { background:" + panelBg + "; color:" + text + "; border:1px solid " + border + "; border-radius:5px; padding:8px 13px; }";
@@ -357,8 +329,28 @@ void RiskPage::buildUi()
     connect(obstacle, &QPushButton::clicked, this, &RiskPage::runPresetObstacleApproach);
     connect(simulateButton, &QPushButton::clicked, this, &RiskPage::toggleSimulation);
     connect(reset, &QPushButton::clicked, this, &RiskPage::resetSimulation);
-    connect(historyToggleButton, &QPushButton::clicked, this, [this]() { simulationView->setRiskHistoryVisible(historyToggleButton->isChecked()); });
-    connect(outputToggleButton, &QPushButton::clicked, this, [this]() { outputPanel->setVisible(outputToggleButton->isChecked()); });
+
+    // Risk History and Log/Summary are exclusive panels.
+    // Both panels can be turned off, but only one panel can be visible at a time.
+    connect(historyToggleButton, &QPushButton::clicked, this, [this]() {
+        const bool showHistory = historyToggleButton->isChecked();
+        if (showHistory) {
+            outputToggleButton->setChecked(false);
+            outputPanel->hide();
+        }
+        simulationView->setRiskHistoryVisible(showHistory);
+    });
+
+    // Log/Summary and Risk History are exclusive panels.
+    // Turning on Log/Summary automatically turns off Risk History.
+    connect(outputToggleButton, &QPushButton::clicked, this, [this]() {
+        const bool showOutput = outputToggleButton->isChecked();
+        if (showOutput) {
+            historyToggleButton->setChecked(false);
+            simulationView->setRiskHistoryVisible(false);
+        }
+        outputPanel->setVisible(showOutput);
+    });
 }
 
 // Build the left input panel.
