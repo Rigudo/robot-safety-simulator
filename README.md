@@ -1,10 +1,10 @@
-# Robot Safety Simulator 협업 가이드
+# Robot Safety Simulator 개발 가이드
 
-이 저장소는 Qt Widgets 기반 로봇 안전 상태 판단 시뮬레이터입니다. 현재 코드는 **Risk Page 중심 중간 협업 단계**입니다. 즉, 최종 제출용 완성본이라기보다 팀원이 코드를 받아서 실행하고, 각자 맡은 화면이나 기능을 통합하기 위한 기준 코드입니다.
+이 저장소는 Qt Widgets 기반 로봇 안전 상태 판단 시뮬레이터입니다. 현재 코드는 `RiskPage` 중심으로 구성되어 있으며, 이후 `ImagePage`, `LogicPage`, `RiskPage`를 하나의 프로그램으로 통합할 수 있도록 기준 구조를 잡아둔 상태입니다.
 
 ---
 
-## 1. 현재 프로젝트에서 실행해야 하는 파일
+## 1. 실행 파일
 
 Qt Creator에서 아래 파일을 열면 됩니다.
 
@@ -12,7 +12,7 @@ Qt Creator에서 아래 파일을 열면 됩니다.
 robotSafety/RobotRiskSimulator.pro
 ```
 
-실행 흐름은 다음과 같습니다.
+현재 실행 흐름은 다음과 같습니다.
 
 ```text
 RobotRiskSimulator.pro
@@ -24,9 +24,9 @@ RobotRiskSimulator.pro
 
 ---
 
-## 2. 현재 남겨야 하는 핵심 파일
+## 2. 핵심 파일 구조
 
-현재 실제 코드 작성과 통합에 필요한 파일은 아래 6개입니다.
+현재 실제 코드 작성과 통합에 필요한 핵심 파일은 아래 6개입니다.
 
 ```text
 robotSafety/
@@ -38,16 +38,14 @@ robotSafety/
 └─ riskpage.cpp
 ```
 
-각 파일의 역할은 다음과 같습니다.
-
-| 파일 | 역할 | 건드리는 경우 |
+| 파일 | 역할 | 수정하는 경우 |
 |---|---|---|
 | `RobotRiskSimulator.pro` | Qt 프로젝트 설정 파일 | 새 `.cpp`, `.h` 파일을 추가할 때 |
-| `main.cpp` | 프로그램 시작점 | 메인 화면을 바꾸거나 전체 창 구조를 바꿀 때 |
+| `main.cpp` | 프로그램 시작점 | 메인 화면 구조를 바꿀 때 |
 | `SafetyModel.h` | 입력값/결과값 구조 정의 | 판단에 필요한 변수를 추가할 때 |
 | `SafetyModel.cpp` | MOVE/WARNING/DANGER/STOP 판단 로직 | 안전 판단 기준을 바꿀 때 |
 | `riskpage.h` | RiskPage 화면 클래스 선언 | 버튼, 슬라이더, 함수, 멤버 변수를 추가할 때 |
-| `riskpage.cpp` | 실제 UI 구성, 시뮬레이션, 로그 구현 | 화면 배치나 동작을 바꿀 때 |
+| `riskpage.cpp` | UI 구성, 시뮬레이션, 로그 구현 | 화면 배치나 동작을 바꿀 때 |
 
 ---
 
@@ -61,7 +59,7 @@ robotSafety/build_check/
 robotSafety/build/Desktop_Qt_6_11_1_MinGW_64_bit-Debug/
 ```
 
-이 폴더들은 Qt Creator가 컴파일하면서 자동으로 만든 **빌드 결과물**입니다. 소스코드가 아니라 컴퓨터가 만든 임시 파일에 가깝습니다.
+이 폴더들은 Qt Creator가 컴파일하면서 자동으로 만든 빌드 결과물입니다. 소스코드가 아니라 실행 파일, 임시 파일, 자동 생성 파일에 가깝습니다.
 
 앞으로 이런 파일이 다시 올라가지 않도록 `.gitignore`를 추가했습니다.
 
@@ -69,13 +67,20 @@ robotSafety/build/Desktop_Qt_6_11_1_MinGW_64_bit-Debug/
 .gitignore
 ```
 
-다만 이미 GitHub에 올라간 빌드 폴더가 화면에 남아 있으면 최종 제출 전에 GitHub 웹에서 삭제하거나 로컬에서 `git rm -r`로 제거하면 됩니다.
+이미 GitHub에 올라간 빌드 폴더가 남아 있으면 최종 정리 단계에서 GitHub 웹에서 삭제하거나 로컬에서 아래 명령으로 제거하면 됩니다.
+
+```bash
+git rm -r robotSafety/build
+git rm -r robotSafety/build_check
+git commit -m "Remove build output folders"
+git push
+```
 
 ---
 
 ## 4. 전체 구조를 한 파일처럼 이해하는 방법
 
-이 프로젝트는 파일이 여러 개로 나뉘어 있지만, 실제 흐름은 하나입니다.
+이 프로젝트는 파일이 여러 개로 나뉘어 있지만 실제 흐름은 하나입니다.
 
 ```text
 main.cpp
@@ -88,7 +93,7 @@ main.cpp
 → appendLog()가 로그 기록
 ```
 
-즉, 핵심 흐름은 다음 한 줄로 요약할 수 있습니다.
+핵심 흐름은 다음 한 줄입니다.
 
 ```text
 입력값 읽기 → 안전 판단 → 화면 출력 → 로그 저장
@@ -113,23 +118,30 @@ page.show()
 app.exec()
 ```
 
-보통 이 파일은 많이 건드릴 필요 없습니다.
+보통 이 파일은 많이 수정할 필요가 없습니다.
 
-건드리는 경우는 하나입니다.
+수정이 필요한 경우는 `RiskPage` 하나만 띄우는 구조에서 `ImagePage / LogicPage / RiskPage`를 모두 포함하는 `MainWindow` 구조로 바꿀 때입니다.
 
-```text
-RiskPage 하나만 띄우는 구조에서
-ImagePage / LogicPage / RiskPage를 모두 포함하는 MainWindow 구조로 바꿀 때
-```
-
-최종 통합 때는 `main.cpp`에서 바로 `RiskPage`를 띄우는 대신 `MainWindow`를 띄우는 방식이 더 좋습니다.
-
-예상 최종 구조:
+예상 최종 구조는 다음과 같습니다.
 
 ```text
 main.cpp
 → MainWindow 실행
 → MainWindow 안에 ImagePage / LogicPage / RiskPage 탭 배치
+```
+
+현재 `main.cpp`의 핵심 부분은 다음 형태입니다.
+
+```cpp
+RiskPage page;
+page.show();
+```
+
+나중에 전체 통합 구조로 바꿀 때는 다음처럼 바꾸면 됩니다.
+
+```cpp
+MainWindow window;
+window.show();
 ```
 
 ---
@@ -138,14 +150,14 @@ main.cpp
 
 이 파일은 안전 판단에 필요한 데이터 형식을 정의합니다.
 
-현재 입력 구조체는 다음 역할입니다.
+현재 입력 구조체 역할은 다음과 같습니다.
 
 ```text
 SafetyInput
 = 사람 거리, 장애물 거리, 문 열림, 로봇 속도, 감속도, 비상 신호, 경고선, 정지선 저장
 ```
 
-현재 결과 구조체는 다음 역할입니다.
+현재 결과 구조체 역할은 다음과 같습니다.
 
 ```text
 SafetyResult
@@ -154,13 +166,11 @@ SafetyResult
 
 새 센서를 추가하려면 이 파일부터 수정합니다.
 
-예를 들어 온도 센서를 추가한다면:
+예를 들어 온도 센서를 추가한다면 `SafetyInput` 안에 다음 변수를 추가합니다.
 
 ```cpp
 double temperature = 25.0;
 ```
-
-을 `SafetyInput` 안에 추가합니다.
 
 그다음 `SafetyModel.cpp`에서 이 값을 실제 판단에 반영해야 합니다.
 
@@ -187,19 +197,17 @@ double temperature = 25.0;
 
 상태 판단 기준을 바꾸려면 이 파일을 수정하면 됩니다.
 
-예를 들어 문 열림 70% 이상에서 STOP인 기준을 80%로 바꾸려면:
+예를 들어 문 열림 70% 이상에서 STOP인 기준을 80%로 바꾸려면 아래 조건을 찾습니다.
 
 ```cpp
 input.doorOpenRate >= 70.0
 ```
 
-을 찾아서:
+그리고 다음처럼 바꿉니다.
 
 ```cpp
 input.doorOpenRate >= 80.0
 ```
-
-으로 바꾸면 됩니다.
 
 제동거리 공식은 다음 위치에 있습니다.
 
@@ -217,28 +225,24 @@ result.brakeDistance = (input.robotSpeed * input.robotSpeed) / qMax(0.1, 2.0 * i
 
 ## 5.4 `riskpage.h`
 
-이 파일은 Risk Page에서 사용할 함수와 변수 목록입니다.
+이 파일은 `RiskPage`에서 사용할 함수와 변수 목록입니다.
 
 새 버튼, 새 슬라이더, 새 라벨을 추가하려면 먼저 여기에 선언해야 합니다.
 
-예를 들어 온도 슬라이더를 추가하려면:
+예를 들어 온도 슬라이더를 추가하려면 다음 멤버 변수를 추가합니다.
 
 ```cpp
 QSlider *temperatureSlider = nullptr;
 QLabel *temperatureValue = nullptr;
 ```
 
-처럼 멤버 변수를 추가합니다.
-
-그리고 `riskpage.cpp`에서 실제 생성과 배치를 합니다.
+그다음 `riskpage.cpp`에서 실제 생성과 배치를 합니다.
 
 ---
 
 ## 5.5 `riskpage.cpp`
 
 이 파일은 화면과 동작의 핵심입니다.
-
-함수별 역할은 다음과 같습니다.
 
 | 함수 | 역할 |
 |---|---|
@@ -262,13 +266,13 @@ QLabel *temperatureValue = nullptr;
 
 ---
 
-## 6. 팀원이 기능을 추가할 때 어디를 건드려야 하는가
+## 6. 기능을 추가할 때 수정 위치
 
 ## 6.1 입력값을 추가할 때
 
 예: 온도, 배터리, 조도, 충돌 센서 등
 
-수정 순서:
+수정 순서는 다음과 같습니다.
 
 ```text
 1. SafetyModel.h
@@ -304,7 +308,7 @@ QLabel *temperatureValue = nullptr;
 
 예: `PAUSE`, `EMERGENCY`, `SLOW`, `BLOCKED`
 
-수정 순서:
+수정 순서는 다음과 같습니다.
 
 ```text
 1. SafetyModel.cpp
@@ -359,7 +363,7 @@ WARNING 영역
 
 중앙 그림만 수정하고 싶으면 `SafetyModel.cpp`는 건드리지 않아도 됩니다.
 
-예를 들어 로봇 모양만 바꾸고 싶으면 `paintEvent()` 안의 로봇을 그리는 부분만 수정하면 됩니다.
+로봇 모양만 바꾸고 싶으면 `paintEvent()` 안의 로봇을 그리는 부분만 수정하면 됩니다.
 
 ---
 
@@ -422,7 +426,7 @@ riskpage.cpp
 
 ---
 
-## 7. 다른 팀원 코드와 통합하는 방법
+## 7. 여러 화면을 하나로 통합하는 구조
 
 최종적으로 화면이 여러 개가 된다면 아래 구조를 추천합니다.
 
@@ -453,21 +457,19 @@ main.cpp
 → MainWindow 안에 ImagePage / LogicPage / RiskPage 배치
 ```
 
-즉, 현재 `main.cpp`의 핵심 부분:
+현재 `main.cpp`의 핵심 부분:
 
 ```cpp
 RiskPage page;
 page.show();
 ```
 
-을 나중에:
+을 나중에 다음처럼 바꿉니다.
 
 ```cpp
 MainWindow window;
 window.show();
 ```
-
-로 바꾸면 됩니다.
 
 ---
 
@@ -504,13 +506,13 @@ HEADERS += \
 
 ---
 
-## 9. 현재 코드 기준 최종 통합 우선순위
+## 9. 통합 우선순위
 
-지금 당장 통합할 때는 아래 순서가 좋습니다.
+현재 코드 기준으로 아래 순서가 좋습니다.
 
 ```text
 1. Qt Creator에서 현재 코드 실행 확인
-2. 각 팀원 코드 파일명 정리
+2. 추가할 화면의 파일명 정리
 3. ImagePage / LogicPage / RiskPage로 역할 분리
 4. MainWindow 만들기
 5. main.cpp에서 MainWindow 실행으로 변경
@@ -524,22 +526,23 @@ HEADERS += \
 ## 10. 주의할 점
 
 - `SafetyModel.cpp`는 판단 로직 파일입니다. 화면 디자인만 바꾸고 싶으면 건드리지 않는 것이 좋습니다.
-- `riskpage.cpp`는 화면과 이벤트가 많아서 충돌이 가장 잘 나는 파일입니다. 여러 명이 동시에 같은 부분을 수정하지 않는 것이 좋습니다.
+- `riskpage.cpp`는 화면과 이벤트가 많아서 충돌이 가장 잘 나는 파일입니다. 가능하면 한 번에 여러 부분을 동시에 수정하지 않는 것이 좋습니다.
 - 새 기능은 가능하면 새 파일로 분리하는 것이 좋습니다.
 - 최종 제출 전에는 build 폴더를 삭제하고, 소스 파일 중심으로 정리해야 합니다.
 - `.gitignore`는 이미 추가되어 있으므로 이후 빌드 결과물이 다시 올라갈 가능성은 줄었습니다.
 
 ---
 
-## 11. 현재 담당 권장
+## 11. 현재 권장 구성
 
-현재 코드 기준 역할 분담은 이렇게 잡는 것이 좋습니다.
+현재 코드 기준 권장 구성은 다음과 같습니다.
 
 ```text
-A팀원: ImagePage 구현
-B팀원: LogicPage 구현
-C팀원: RiskPage 정리 및 SafetyModel 보완
-공통: MainWindow 통합, README/보고서 정리
+ImagePage: 이미지 처리 화면
+LogicPage: 체크박스 기반 논리 판단 화면
+RiskPage: 거리/속도/제동거리 기반 위험도 화면
+SafetyModel: 안전 상태 판단 로직
+MainWindow: 전체 화면 통합
 ```
 
-현재 저장소는 `RiskPage` 중심 코드가 먼저 올라간 상태이므로, 다른 팀원 코드는 `RiskPage`를 직접 수정하기보다 새 Page 클래스로 추가하는 방향이 안전합니다.
+현재 저장소는 `RiskPage` 중심 코드가 먼저 올라간 상태이므로, 다른 화면은 `RiskPage`를 직접 수정하기보다 새 Page 클래스로 추가하는 방향이 안전합니다.
