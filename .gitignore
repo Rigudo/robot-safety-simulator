@@ -1,0 +1,33 @@
+# Qt Creator build folders
+build/
+build-*/
+*/build/
+*/build-*/
+
+# Current project build folders
+robotSafety/build/
+robotSafety/build_check/
+robotSafety/build/Desktop_Qt_6_11_1_MinGW_64_bit-Debug/
+
+# Qt generated files
+*.pro.user
+*.qmake.stash
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+
+# C/C++ build outputs
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.lib
+*.out
+
+# IDE and OS files
+.vs/
+.vscode/
+.DS_Store
+Thumbs.db
